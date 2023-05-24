@@ -32,7 +32,7 @@ public class MainClass2 {
 		ArrayList<BufferedImage> result = new ArrayList<BufferedImage>();
 	    for (final File frame : folder.listFiles()) {
 	    	TheImage ti = new TheImage (frame.getAbsolutePath());
-	    	ti.imageEncrypt();
+	    	ti.enhancedEncrypt();
 	    	result.add(ti.getImage());
 	    }
 	    return result;
