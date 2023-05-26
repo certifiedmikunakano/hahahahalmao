@@ -79,6 +79,96 @@ public class TheImage {
    	 
       }
     
+    public void imageDecrypt () throws IOException{
+    	int width = 1018;	//width of the image
+    	int height = 1018;   //height of the image
+    	BufferedImage image = null;
+    	File f = null;
+    	Scanner scan = new Scanner(System.in);
+   	 
+    	//read image
+    	try{
+      	f = new File(fileName); //image file path
+      	BufferedImage rawImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+      	rawImage = ImageIO.read(f);
+      	image = resizeImage(rawImage, width, height);
+      	System.out.println("Reading complete.");
+    	}catch(IOException e){
+      	System.out.println("Error: "+e);
+    	}
+   	 
+    	System.out.println("Enter the decryption code for that image: ");
+   	 
+    	String codestring = scan.nextLine();
+    	int code = Integer.parseInt(codestring);
+    	int root1 = code / 10000;
+    	int root2 = code % 10000;
+   	 
+    	BufferedImage unscrambledImage1 = unscrambleCols (image, root1);
+
+    	BufferedImage unscrambledImage2 = unscrambleRows (unscrambledImage1, root2);
+    	System.out.println("Image unscrambled.");
+   	 
+   			    	 
+    	ImageIO.write(unscrambledImage2, "png", f);
+    	System.out.println("Writing complete.");
+    	
+    	image = unscrambledImage2;
+      	 	
+      	 
+         }
+    
+    public void enhancedDecrypt () throws IOException{
+    	int width = 1018;	//width of the image
+    	int height = 1018;   //height of the image
+    	BufferedImage image = null;
+    	File f = null;
+    	Scanner scan = new Scanner(System.in);
+   	 
+    	//read image
+    	try{
+      	f = new File(fileName); //image file path
+      	BufferedImage rawImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+      	rawImage = ImageIO.read(f);
+      	image = resizeImage(rawImage, width, height);
+      	System.out.println("Reading complete.");
+    	}catch(IOException e){
+      	System.out.println("Error: "+e);
+    	}
+   	 
+    	System.out.println("Enter the decryption code for that image: ");
+   	 
+    	String codestring = scan.nextLine();
+    	String[] rootsArray = codestring.split(" ");
+    
+    	int root1 = Integer.parseInt(rootsArray[0]);
+    	int root2 = Integer.parseInt(rootsArray[1]);
+    	int root3 = Integer.parseInt(rootsArray[2]);
+    	int root4 = Integer.parseInt(rootsArray[3]);
+    	int root5 = Integer.parseInt(rootsArray[4]);
+    	int root6 = Integer.parseInt(rootsArray[5]);
+
+    	
+   	 
+    	BufferedImage unscrambledImage1 = unscrambleCols (image, root1);
+
+    	BufferedImage unscrambledImage2 = unscrambleRows (unscrambledImage1, root2);
+    	
+    	BufferedImage unscrambledImage3 = unscrambleD1 (unscrambledImage2, root3, root4);
+
+    	BufferedImage unscrambledImage4 = unscrambleD2 (unscrambledImage3, root5, root6);
+
+    	System.out.println("Image unscrambled.");
+   	 
+   			    	 
+    	ImageIO.write(unscrambledImage4, "png", f);
+    	System.out.println("Writing complete.");
+    	
+    	image = unscrambledImage4;
+      	 	
+      	 
+         }
+    
     public void enhancedEncrypt () throws IOException{
       	 Random random = new Random();
        	int width = 1018;	//width of the image
@@ -264,6 +354,128 @@ public class TheImage {
       	 }
       	 return scrambled;
        }
+    
+    public static int discreteLogBasePrMod1019 (int base, int k) {
+      	 int value = 0;
+      	 for (int i = 0; i < 1019; i++) {
+      		 if (prToThe(base, i) % 1019 == k) {
+      			 value = i;
+      			 break;
+      		 }
+      	 }
+      	 return value;
+       }
+       
+       //use pr1
+       public static ArrayList<Color> decryptRows (ArrayList <Color> original, int pr) {
+      	 ArrayList<Color> newArr = new ArrayList<Color>();
+      	 for (int i = 0; i < original.size(); i++) {
+      		 newArr.add(original.get(discreteLogBasePrMod1019(pr, i+1)));
+      	 }
+      	 return newArr;
+       }
+       
+       //use pr2
+       public static ArrayList<Color> decryptCols (ArrayList <Color> original, int pr) {
+      	 ArrayList<Color> newArr = new ArrayList<Color>();
+      	 for (int i = 0; i < original.size(); i++) {
+      		 newArr.add(original.get(discreteLogBasePrMod1019(pr, i+1)));
+      	 }
+      	 return newArr;
+       }
+
+       
+       public static BufferedImage unscrambleCols (BufferedImage original, int pr) {
+      		 BufferedImage unscrambled = new BufferedImage (original.getWidth(), original.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      		 
+      		 //scramble each row
+      		 for (int y = 0; y < original.getHeight(); y++) {
+      			 ArrayList<Color> origRow = new ArrayList <Color> ();
+      			 for (int j = 0; j < original.getWidth(); j++) {
+      				 Color c = new Color(original.getRGB(j, y));
+      				 origRow.add(c);
+      			 }
+      			 
+      			 ArrayList<Color> unscrambledRow = decryptRows (origRow, pr);
+      			 for (int j = 0; j < original.getWidth(); j++) {
+      				 int newRGB = unscrambledRow.get(j).getRGB();
+      				 unscrambled.setRGB(j, y, newRGB);
+      			 }
+      			 System.out.println("Column " + y + " unscrambled");
+
+      		 }
+      		 return unscrambled;
+      	 }
+       
+       public static BufferedImage unscrambleRows (BufferedImage original, int pr) {
+      	 BufferedImage unscrambled = new BufferedImage (original.getWidth(), original.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      	 
+      	 //scramble each column
+      	 for (int x = 0; x < original.getWidth(); x++) {
+      		 ArrayList<Color> origCol = new ArrayList <Color> ();
+      		 for (int j = 0; j < original.getHeight(); j++) {
+      			 Color c = new Color(original.getRGB(x, j));
+      			 origCol.add(c);
+      		 }
+      		 
+      		 ArrayList<Color> unscrambledCol = decryptCols (origCol, pr);
+      		 for (int j = 0; j < original.getHeight(); j++) {
+      			 int newRGB = unscrambledCol.get(j).getRGB();
+      			 unscrambled.setRGB(x, j, newRGB);
+      		 }
+      		 System.out.println("Row " + x + " unscrambled");
+
+      	 }
+      	 return unscrambled;
+       }
+       
+       public static BufferedImage unscrambleD1 (BufferedImage original, int pr1, int pr2) {
+    		 BufferedImage unscrambled = new BufferedImage (original.getWidth(), original.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    		 
+    		 //scramble each row
+    		 for (int y = 0; y < original.getHeight(); y++) {
+    			 ArrayList<Color> origRow = new ArrayList <Color> ();
+    			 for (int j = 0; j < original.getWidth(); j++) {
+      				 int modifiedY = (y + (prToThe(pr1, j))) % 1018;
+    				 Color c = new Color(original.getRGB(j, modifiedY));
+    				 origRow.add(c);
+    			 }
+    			 
+    			 ArrayList<Color> unscrambledRow = decryptRows (origRow, pr2);
+    			 for (int j = 0; j < original.getWidth(); j++) {
+      				 int modifiedY = (y + (prToThe(pr1, j))) % 1018;
+    				 int newRGB = unscrambledRow.get(j).getRGB();
+    				 unscrambled.setRGB(j, modifiedY, newRGB);
+    			 }
+    			 System.out.println("Column " + y + " unscrambled");
+
+    		 }
+    		 return unscrambled;
+    	 }
+       
+       public static BufferedImage unscrambleD2 (BufferedImage original, int pr1, int pr2) {
+        	 BufferedImage unscrambled = new BufferedImage (original.getWidth(), original.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        	 
+        	 //scramble each column
+        	 for (int x = 0; x < original.getWidth(); x++) {
+        		 ArrayList<Color> origCol = new ArrayList <Color> ();
+        		 for (int j = 0; j < original.getHeight(); j++) {
+          			 int modifiedX = (x + (prToThe(pr1, j))) % 1018;
+        			 Color c = new Color(original.getRGB(modifiedX, j));
+        			 origCol.add(c);
+        		 }
+        		 
+        		 ArrayList<Color> unscrambledCol = decryptCols (origCol, pr2);
+        		 for (int j = 0; j < original.getHeight(); j++) {
+          			 int modifiedX = (x + (prToThe(pr1, j))) % 1018;
+        			 int newRGB = unscrambledCol.get(j).getRGB();
+        			 unscrambled.setRGB(modifiedX, j, newRGB);
+        		 }
+        		 System.out.println("Row " + x + " unscrambled");
+
+        	 }
+        	 return unscrambled;
+         }
 
 }
 
