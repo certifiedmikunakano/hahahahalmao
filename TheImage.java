@@ -14,6 +14,7 @@ public class TheImage {
 	private String fileName;
 	public TheImage (String fn) {
 		fileName = fn;
+		
 	}
 	
 	public TheImage (BufferedImage im) {
@@ -149,14 +150,13 @@ public class TheImage {
     	int root6 = Integer.parseInt(rootsArray[5]);
 
     	
-   	 
-    	BufferedImage unscrambledImage1 = unscrambleCols (image, root1);
-
-    	BufferedImage unscrambledImage2 = unscrambleRows (unscrambledImage1, root2);
     	
-    	BufferedImage unscrambledImage3 = unscrambleD1 (unscrambledImage2, root3, root4);
-
-    	BufferedImage unscrambledImage4 = unscrambleD2 (unscrambledImage3, root5, root6);
+   
+   	 
+    	BufferedImage unscrambledImage1 = unscrambleD2 (image, root5, root6);
+    	BufferedImage unscrambledImage2 = unscrambleD1 (unscrambledImage1, root3, root4);
+    	BufferedImage unscrambledImage3 = unscrambleRows (unscrambledImage2, root2);
+    	BufferedImage unscrambledImage4 = unscrambleCols (unscrambledImage3, root1);
 
     	System.out.println("Image unscrambled.");
    	 
@@ -365,12 +365,51 @@ public class TheImage {
       	 }
       	 return value;
        }
+    
+    public static int discreteLogBasePrMod1019_ (int base, int k) {
+     	 return discreteLogarithm(base, k, 1019);
+      }
+    
+    static int discreteLogarithm(int a, int b, int m)
+    {
+        int n = (int) (Math.sqrt (m) + 1);
+ 
+        // Calculate a ^ n
+        int an = 1;
+        for (int i = 0; i < n; ++i)
+            an = (an * a) % m;
+ 
+        int[] value=new int[m];
+ 
+        // Store all values of a^(n*i) of LHS
+        for (int i = 1, cur = an; i <= n; ++i)
+        {
+            if (value[ cur ] == 0)
+                value[ cur ] = i;
+            cur = (cur * an) % m;
+        }
+ 
+        for (int i = 0, cur = b; i <= n; ++i)
+        {
+            // Calculate (a ^ j) * b and check
+            // for collision
+            if (value[cur] > 0)
+            {
+                int ans = value[cur] * n - i;
+                if (ans < m)
+                    return ans;
+            }
+            cur = (cur * a) % m;
+        }
+        return -1;
+    }
        
        //use pr1
        public static ArrayList<Color> decryptRows (ArrayList <Color> original, int pr) {
       	 ArrayList<Color> newArr = new ArrayList<Color>();
       	 for (int i = 0; i < original.size(); i++) {
-      		 newArr.add(original.get(discreteLogBasePrMod1019(pr, i+1)));
+      		
+      		 newArr.add(original.get(discreteLogBasePrMod1019_(pr, i+1) % 1018));
       	 }
       	 return newArr;
        }
@@ -379,7 +418,7 @@ public class TheImage {
        public static ArrayList<Color> decryptCols (ArrayList <Color> original, int pr) {
       	 ArrayList<Color> newArr = new ArrayList<Color>();
       	 for (int i = 0; i < original.size(); i++) {
-      		 newArr.add(original.get(discreteLogBasePrMod1019(pr, i+1)));
+      		 newArr.add(original.get(discreteLogBasePrMod1019_(pr, i+1) % 1018));
       	 }
       	 return newArr;
        }
