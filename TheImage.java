@@ -16,6 +16,118 @@ public class TheImage {
     private int tempRoot5;
     private int tempRoot6;
     
+    private ArrayList<BufferedImage> approxImages = new ArrayList<BufferedImage>();
+    
+    public void setApproxImages (String directoryName, int size) throws IOException {
+    	File folder = new File (directoryName);
+    	for (File approxImage : folder.listFiles()) {
+    		BufferedImage bi = ImageIO.read(approxImage);
+    		BufferedImage addedImage = resizeImage(bi, size, size);
+    		approxImages.add(addedImage);
+    	}
+    	
+    }
+    
+    public ArrayList<BufferedImage> getApproxImages () {
+    	return approxImages;
+    }
+    
+    private ArrayList<Color> computeAverages (ArrayList<BufferedImage> input) {
+    	ArrayList<Color> result = new ArrayList<Color>();
+    	for (int i = 0; i < input.size(); i++) {
+    		result.add(computeAverage(input.get(i)));
+    	}
+    	return result;
+    }
+    
+    private Color computeAverage (BufferedImage bi) {
+    	long rSum = 0;
+    	long gSum = 0;
+    	long bSum = 0;
+    	for (int i = 0; i < bi.getWidth(); i++) {
+    		for (int j = 0; j < bi.getHeight(); j++) {
+    			Color c = new Color (bi.getRGB(i, j));
+    			rSum += c.getRed();
+    			gSum += c.getGreen();
+    			bSum += c.getBlue();
+    		}
+    	}
+    	int totalPixels = bi.getWidth() * bi.getHeight();
+    	return new Color((int) (rSum / totalPixels), (int) (gSum / totalPixels), (int) (bSum / totalPixels));
+    }
+    
+    private int determineClosestIndex (Color input) {
+    	ArrayList<Color> colorBank = computeAverages (approxImages);
+    	
+    	int minDistance = 99999999;
+    	int minDistanceIndex = 0;
+    	
+    	for (int i = 0; i < colorBank.size(); i++) {
+    		Color candidate = colorBank.get(i);
+    		double candidateRed = candidate.getRed();
+    		double candidateGreen = candidate.getGreen();
+    		double candidateBlue = candidate.getBlue();
+    		double red = input.getRed();
+    		double green = input.getGreen();
+    		double blue = input.getBlue();
+    		double squared = Math.pow(candidateRed - red, 2) + Math.pow(candidateGreen - green, 2) + Math.pow(candidateBlue - blue, 2);
+    		double distance = Math.sqrt(squared);
+    		
+    		if (distance < minDistance) {
+    			minDistance = (int) distance;
+    			minDistanceIndex = i;
+    		}
+    		
+    	}
+    	
+    	return minDistanceIndex;
+    	
+    	
+    }
+    
+    public void emojify (int width, int height, int emojiSize) throws IOException {
+    	//read image
+    	File f = null;
+      	 try{
+    		 f = new File(fileName); //image file path
+    		 rawImage = new BufferedImage(1018, 1018, BufferedImage.TYPE_INT_ARGB);
+    		 rawImage = ImageIO.read(f);
+    		 image = resizeImage(rawImage, width*emojiSize, height*emojiSize);
+    		 System.out.println("Reading complete.");
+      	 }catch(IOException e){
+    		 System.out.println("Error: "+e);
+      	 }
+      	 
+      	 for (int x = 0; x < width; x++) {
+      		 for (int y = 0; y < height; y++) {
+      			 
+      			 //compute average RGB of cell
+      			 BufferedImage sub = image.getSubimage(x * emojiSize, y*emojiSize, emojiSize, emojiSize);
+      			 
+      			 Color inputColor = computeAverage (sub);
+      			 int index = determineClosestIndex (inputColor);
+      			 BufferedImage replace = approxImages.get(index);
+      			 
+      	
+      			 for (int i = x*emojiSize; i < (x+1)*emojiSize; i++) {
+      				for (int j = y*emojiSize; j < (y+1)*emojiSize; j++) {
+      					int newRGB = replace.getRGB(i % emojiSize, j % emojiSize);
+      					image.setRGB(i, j, newRGB);
+         
+      					
+         			 }
+      			 }
+      			 
+      		 }
+      	 }
+      	 System.out.println("Image emojified with " + width + " emojis by " + height + " emojis. ");
+      	ImageIO.write(image, "png", f);
+      	System.out.println("Writing complete.");
+      	 
+    }
+    
+    
+    
     private String fileName;
     public TheImage (String fn) {
    	 fileName = fn;
